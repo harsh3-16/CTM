@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
@@ -20,6 +21,8 @@ const io = new Server(httpServer, {
 // Make io accessible to routers
 app.set('io', io);
 
+// Middleware
+app.use(morgan('dev')); // HTTP request logger
 app.use(cors());
 app.use(express.json());
 
