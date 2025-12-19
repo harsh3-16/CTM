@@ -20,27 +20,83 @@ A full-stack, real-time task management application built for the [Company/Assig
 | **Real-time** | Socket.io                                                       |
 | **DevOps**    | Docker, Docker Compose                                          |
 
-## 🚀 Quick Setup (Docker)
+## 🚀 Quick Start
 
-The easiest way to run the entire stack (DB + Backend + Frontend\*) is via Docker.
+### Option 1: Docker (Recommended - No Database Setup Required)
 
-| Step          | Command                              | Description                               |
-| :------------ | :----------------------------------- | :---------------------------------------- |
-| **1. Env**    | `cp server/.env.example server/.env` | _Ensure environment variables are set._   |
-| **2. Run**    | `docker-compose up --build`          | Starts Postgres (5432) and Server (5000). |
-| **3. Client** | `cd client && npm run dev`           | Starts frontend on port 3000.             |
+```bash
+# 1. Start backend + database
+docker-compose up --build
 
-_> Note: Currently docker-compose manages DB & Server. Client is best run locally for dev._
+# 2. In a new terminal, start frontend
+cd client
+npm install
+npm run dev
+```
 
-## 💻 Manual Setup
+**Access the app:** http://localhost:3000
 
-If you prefer running without Docker:
+✅ No `.env` file needed - everything pre-configured!
 
-| Component    | Commands                                                                | Port   |
-| :----------- | :---------------------------------------------------------------------- | :----- |
-| **Database** | Ensure Postgres is running locally. Update `.env` with URL.             | `5432` |
-| **Backend**  | `cd server`<br>`npm install`<br>`npx prisma migrate dev`<br>`npm start` | `5000` |
-| **Frontend** | `cd client`<br>`npm install`<br>`npm run dev`                           | `3000` |
+---
+
+### Option 2: Manual Setup
+
+**Prerequisites:** Node.js 18+, PostgreSQL database
+
+#### Backend Setup
+
+```bash
+cd server
+npm install
+
+# Create .env file with your database credentials
+# Example:
+# PORT=8000
+# DATABASE_URL="postgresql://user:password@localhost:5432/ctm_db"
+# JWT_SECRET="your-secret-key"
+
+# Run migrations
+npx prisma generate
+npx prisma migrate dev --name init
+
+# Optional: Seed test users
+npx ts-node src/seed.ts
+
+# Start server
+npm run dev
+```
+
+#### Frontend Setup
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+**Access the app:** http://localhost:3000
+
+---
+
+## 🧪 Test Credentials
+
+After seeding, you can login with:
+
+- **Email:** `alice@example.com`
+- **Password:** `password123`
+
+Or register a new account!
+
+---
+
+## 📊 What's Running?
+
+| Service     | Port | URL                   |
+| :---------- | :--- | :-------------------- |
+| Frontend    | 3000 | http://localhost:3000 |
+| Backend API | 8000 | http://localhost:8000 |
+| PostgreSQL  | 5432 | localhost:5432        |
 
 ## 🔌 API Endpoints
 
@@ -53,6 +109,22 @@ If you prefer running without Docker:
 | **POST**   | `/tasks`         | Create a new task.                          | **Yes** |
 | **PUT**    | `/tasks/:id`     | Update task details/status.                 | **Yes** |
 | **DELETE** | `/tasks/:id`     | Delete a task.                              | **Yes** |
+| **GET**    | `/users`         | List all users (for assignment).            | **Yes** |
+
+## 🧪 Testing
+
+| Command                 | Description                    |
+| :---------------------- | :----------------------------- |
+| `npm test`              | Run all unit tests             |
+| `npm run test:watch`    | Run tests in watch mode        |
+| `npm run test:coverage` | Run tests with coverage report |
+
+**Test Coverage:**
+
+- ✅ 23 tests passing
+- Validation schemas (Auth + Task)
+- Password hashing (bcrypt)
+- JWT token generation/verification
 
 ## 📂 Project Structure
 
@@ -61,5 +133,17 @@ If you prefer running without Docker:
 | `client/`                | Next.js Frontend application.   |
 | `server/`                | Express Backend application.    |
 | `server/src/controllers` | Request handlers (Auth, Tasks). |
-| `server/src/services`    | Business logic layer.           |
+| `server/src/__tests__`   | Unit tests (Jest).              |
 | `server/prisma`          | Database schema and migrations. |
+
+## 🌐 Environment Variables
+
+**Server (`server/.env`):**
+
+```env
+PORT=8000
+DATABASE_URL="postgresql://user:pass@host:5432/dbname"
+JWT_SECRET="your-secret-key"
+```
+
+**Client:** Uses `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`)

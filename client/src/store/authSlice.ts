@@ -13,12 +13,36 @@ interface AuthState {
   isLoading: boolean;
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: null, // In a real app, initialize from localStorage if desired (but handle hydration carefully in Next.js)
-  isAuthenticated: false,
-  isLoading: true,
+// Load initial state from localStorage
+const loadInitialState = (): AuthState => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        return {
+          user,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+        };
+      } catch (e) {
+        // Invalid data, clear it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+  }
+  return {
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    isLoading: false,
+  };
 };
+
+const initialState: AuthState = loadInitialState();
 
 const authSlice = createSlice({
   name: 'auth',
@@ -30,7 +54,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isLoading = false;
       if (typeof window !== 'undefined') {
-          localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('token', action.payload.token);
       }
     },
     logout: (state) => {
@@ -39,11 +63,11 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
+        localStorage.removeItem('token');
       }
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
-        state.isLoading = action.payload;
+      state.isLoading = action.payload;
     }
   },
 });

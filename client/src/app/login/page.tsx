@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLogin } from '@/hooks/useAuth';
+import { useToast } from '@/components/ToastProvider';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { showToast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { mutate: login, isPending, error } = useLogin();
@@ -16,7 +18,11 @@ export default function LoginPage() {
             { email, password },
             {
                 onSuccess: () => {
+                    showToast('Welcome back! Login successful.', 'success');
                     router.push('/dashboard');
+                },
+                onError: () => {
+                    showToast('Login failed. Please check your credentials.', 'error');
                 },
             }
         );
@@ -39,7 +45,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -54,7 +60,7 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none"
                             placeholder="••••••••"
                         />
                     </div>

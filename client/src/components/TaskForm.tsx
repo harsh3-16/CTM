@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CreateTaskDto, UpdateTaskDto } from '@/types';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { useUsers } from '@/hooks/useUsers';
 
 interface TaskFormProps {
     initialData?: Partial<UpdateTaskDto>;
@@ -13,12 +14,22 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ initialData, onSubmit, onCancel, isLoading }: TaskFormProps) {
+    const { data: users = [] } = useUsers();
+
+    // Convert ISO date to yyyy-MM-dd format for date input
+    const formatDateForInput = (dateString?: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    };
+
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         description: initialData?.description || '',
         priority: initialData?.priority || 'MEDIUM' as const,
         status: initialData?.status || 'TODO' as const,
-        dueDate: initialData?.dueDate || '',
+        dueDate: formatDateForInput(initialData?.dueDate),
+        assignedToId: initialData?.assignedToId || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -46,7 +57,7 @@ export function TaskForm({ initialData, onSubmit, onCancel, isLoading }: TaskFor
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:outline-none"
                     placeholder="Describe the task..."
                 />
             </div>
@@ -59,7 +70,7 @@ export function TaskForm({ initialData, onSubmit, onCancel, isLoading }: TaskFor
                     <select
                         value={formData.priority}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     >
                         <option value="LOW">Low</option>
                         <option value="MEDIUM">Medium</option>
@@ -76,7 +87,7 @@ export function TaskForm({ initialData, onSubmit, onCancel, isLoading }: TaskFor
                         <select
                             value={formData.status}
                             onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                         >
                             <option value="TODO">To Do</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -85,6 +96,24 @@ export function TaskForm({ initialData, onSubmit, onCancel, isLoading }: TaskFor
                         </select>
                     </div>
                 )}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Assign To (Optional)
+                </label>
+                <select
+                    value={formData.assignedToId}
+                    onChange={(e) => setFormData({ ...formData, assignedToId: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                >
+                    <option value="">Unassigned</option>
+                    {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                            {user.name || user.email}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <Input

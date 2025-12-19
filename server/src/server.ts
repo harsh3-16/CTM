@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
+import userRoutes from './routes/users';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/users', userRoutes);
 
 io.on('connection', (socket) => {
     console.log('a user connected:', socket.id);

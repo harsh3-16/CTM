@@ -12,7 +12,7 @@ export function useSocket() {
   useEffect(() => {
     // Initialize socket connection
     if (!socket) {
-      socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+      socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
       socket.on('connect', () => {
         console.log('✅ Socket connected:', socket?.id);
@@ -23,27 +23,24 @@ export function useSocket() {
       });
 
       // Listen for task events
-      socket.on('task_created', () => {
-        console.log('📬 Task created event received');
+      socket.on('task_created', (task) => {
+        console.log('📬 Task created event received:', task);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       });
 
-      socket.on('task_updated', () => {
-        console.log('📬 Task updated event received');
+      socket.on('task_updated', (task) => {
+        console.log('📬 Task updated event received:', task);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       });
 
-      socket.on('task_deleted', () => {
-        console.log('📬 Task deleted event received');
+      socket.on('task_deleted', (taskId) => {
+        console.log('📬 Task deleted event received:', taskId);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       });
     }
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-        socket = null;
-      }
+      // Don't disconnect on unmount to maintain connection across page navigation
     };
   }, [queryClient]);
 
