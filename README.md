@@ -1,6 +1,6 @@
 # Collaborative Task Manager (CTM)
 
-A full-stack, real-time task management application built for the [Company/Assignment Name] assessment.
+A full-stack, real-time task management application built for the assessment.
 
 | Feature        | Description                                                          |
 | :------------- | :------------------------------------------------------------------- |
