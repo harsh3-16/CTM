@@ -5,11 +5,12 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
-    "build": "npx prisma generate && tsc",
-    "start": "node dist/server.js",
-    "test": "jest"
-  },
+  "dev": "nodemon --exec ts-node src/server.ts",
+  "build": "chmod +x node_modules/.bin/prisma && npx prisma generate && tsc",
+  "start": "node dist/server.js",
+  "test": "jest"
+},
+
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",
