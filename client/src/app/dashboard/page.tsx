@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
 import { useSocket } from '@/hooks/useSocket';
@@ -11,25 +11,47 @@ import { TaskForm } from '@/components/TaskForm';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { TaskCardSkeleton } from '@/components/TaskCardSkeleton';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useToast } from '@/components/ToastProvider';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '@/types';
 
+type ViewTab = 'all' | 'assigned' | 'created' | 'overdue';
+
 export default function DashboardPage() {
-    useSocket(); // Enable real-time updates
     const router = useRouter();
     const logout = useLogout();
     const user = useAppSelector((state) => state.auth.user);
     const { showToast } = useToast();
 
+    // Enable real-time updates with user's notification room
+    const { notifications, unreadCount, markAsRead, clearNotifications } = useSocket(user?.id);
+
+    const [viewTab, setViewTab] = useState<ViewTab>('all');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [priorityFilter, setPriorityFilter] = useState<string>('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-    const { data: tasks = [], isLoading } = useTasks({
-        status: statusFilter || undefined,
-        priority: priorityFilter || undefined,
-    });
+    // Build filters based on view tab
+    const filters = useMemo(() => {
+        const baseFilters: Record<string, string | undefined> = {
+            status: statusFilter || undefined,
+            priority: priorityFilter || undefined,
+        };
+
+        switch (viewTab) {
+            case 'assigned':
+                return { ...baseFilters, assignedToId: user?.id };
+            case 'created':
+                return { ...baseFilters, creatorId: user?.id };
+            case 'overdue':
+                return { ...baseFilters, overdue: 'true' };
+            default:
+                return baseFilters;
+        }
+    }, [viewTab, statusFilter, priorityFilter, user?.id]);
+
+    const { data: tasks = [], isLoading } = useTasks(filters);
 
     const createTask = useCreateTask();
     const updateTask = useUpdateTask();
@@ -83,6 +105,13 @@ export default function DashboardPage() {
         }
     };
 
+    const viewTabs: { key: ViewTab; label: string; icon: string }[] = [
+        { key: 'all', label: 'All Tasks', icon: '📋' },
+        { key: 'assigned', label: 'Assigned to Me', icon: '👤' },
+        { key: 'created', label: 'Created by Me', icon: '✏️' },
+        { key: 'overdue', label: 'Overdue', icon: '⚠️' },
+    ];
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Header */}
@@ -96,14 +125,39 @@ export default function DashboardPage() {
                             Welcome back, <span className="font-semibold text-gray-900">{user?.name || user?.email}</span>
                         </p>
                     </div>
-                    <Button variant="ghost" onClick={handleLogout} className="hover:bg-red-50 hover:text-red-600">
-                        Logout
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <NotificationBell
+                            notifications={notifications}
+                            unreadCount={unreadCount}
+                            onMarkAsRead={markAsRead}
+                            onClear={clearNotifications}
+                        />
+                        <Button variant="ghost" onClick={handleLogout} className="hover:bg-red-50 hover:text-red-600">
+                            Logout
+                        </Button>
+                    </div>
                 </div>
             </header>
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 py-8">
+                {/* View Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {viewTabs.map((tab) => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setViewTab(tab.key)}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${viewTab === tab.key
+                                    ? 'bg-indigo-600 text-white shadow-md'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                }`}
+                        >
+                            <span className="mr-2">{tab.icon}</span>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Filters and Create Button */}
                 <div className="flex flex-wrap gap-4 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                     <select
@@ -148,8 +202,13 @@ export default function DashboardPage() {
                         ))}
                     </div>
                 ) : tasks.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500">No tasks found. Create one to get started!</p>
+                    <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                        <p className="text-gray-500 text-lg">
+                            {viewTab === 'assigned' && 'No tasks assigned to you.'}
+                            {viewTab === 'created' && 'You haven\'t created any tasks yet.'}
+                            {viewTab === 'overdue' && '🎉 No overdue tasks! Great job!'}
+                            {viewTab === 'all' && 'No tasks found. Create one to get started!'}
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
